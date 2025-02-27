@@ -1,62 +1,53 @@
 import mongoose from "mongoose";
-import bcrypt from "bcryptjs";
 
-const userSchema = new mongoose.Schema(
-  {
-    name: {
-      type: String,
-      required: true,
-    },
-    username: {
-      type: String,
-      required: true,
-      unique: true,
-    },
-    email: {
-      type: String,
-      required: true,
-      unique: true,
-      match: [/.+@.+\..+/, "Please enter a valid email address"],
-    },
-    password: {
-      type: String,
-      minLength: 6,
-      required: true,
-    },
-    profilePic: {
-      type: String,
-      default: "",
-    },
-    followers: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
-      },
-    ],
-    following: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
-      },
-    ],
-    bio: {
-      type: String,
-      default: "",
-    },
-  },
-  {
-    timestamps: true,
-  }
+const userSchema = mongoose.Schema(
+	{
+		name: {
+			type: String,
+			required: true,
+		},
+		username: {
+			type: String,
+			required: true,
+			unique: true,
+		},
+		email: {
+			type: String,
+			required: true,
+			unique: true,
+		},
+		password: {
+			type: String,
+			minLength: 6,
+			required: true,
+		},
+		profilePic: {
+			type: String,
+			default: "",
+		},
+		followers: {
+			type: [String],
+			default: [],
+		},
+		following: {
+			type: [String],
+			default: [],
+		},
+		bio: {
+			type: String,
+			default: "",
+		},
+		isFrozen: {
+			type: Boolean,
+			default: false,
+		},
+	},
+	{
+		timestamps: true,
+	}
 );
 
-
-userSchema.pre("save", async function(next) {
-  if (this.isModified("password")) {
-    this.password = await bcrypt.hash(this.password, 10);
-  }
-  next();
-});
-
+// Check if the model already exists to avoid overwriting
 const User = mongoose.models.User || mongoose.model("User", userSchema);
 
 export default User;
