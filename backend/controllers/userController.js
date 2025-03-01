@@ -6,11 +6,11 @@ const getUserProfile = async (req, res) => {
     const { username } = req.params;
     try {
         const user = await User.findOne({ username }).select("-password -updateAt").lean();
-        if (!user) return res.status(400).json({ message: "User not found" });
+        if (!user) return res.status(400).json({ error: "User not found" });
 
         res.status(200).json(user);
     } catch (err) {
-        res.status(500).json({ message: err.message });
+        res.status(500).json({ error: err.message });
         console.error("Error in getUserProfile", err.message);
     }
 };
@@ -20,7 +20,7 @@ const signupUser = async (req, res) => {
         const { name, email, username, password } = req.body;
 
         if (!name || !email || !username || !password) {
-            return res.status(400).json({ message: "All fields are required" });
+            return res.status(400).json({ error: "All fields are required" });
         }
 
         const emailLower = email.trim().toLowerCase();
@@ -29,17 +29,17 @@ const signupUser = async (req, res) => {
         const userExists = await User.findOne({ $or: [{ email: emailLower }, { username: usernameLower }] }).lean();
 
         if (userExists) {
-            return res.status(400).json({ message: "User already exists" });
+            return res.status(400).json({ error: "User already exists" });
         }
 
         const salt = await bcrypt.genSalt(10);
         if (!salt) {
-            return res.status(500).json({ message: "Error generating salt" });
+            return res.status(500).json({ error: "Error generating salt" });
         }
 
         const hashedPassword = await bcrypt.hash(password, salt);
         if (!hashedPassword) {
-            return res.status(500).json({ message: "Error hashing password" });
+            return res.status(500).json({ error: "Error hashing password" });
         }
 
         const newUser = new User({
@@ -62,7 +62,7 @@ const signupUser = async (req, res) => {
 
     } catch (err) {
         console.error("Error in signupUser:", err);
-        res.status(500).json({ message: "Internal Server Error" });
+        res.status(500).json({ error: "Internal Server Error" });
     }
 };
 
@@ -71,18 +71,18 @@ const loginUser = async (req, res) => {
         const { username, password } = req.body;
 
         if (!username || !password) {
-            return res.status(400).json({ message: "All fields are required" });
+            return res.status(400).json({ error: "All fields are required" });
         }
 
         const user = await User.findOne({ username: username.trim().toLowerCase() }).select("+password").lean();
 
         if (!user) {
-            return res.status(400).json({ message: "Invalid credentials" });
+            return res.status(400).json({ error: "Invalid credentials" });
         }
 
         const isPasswordCorrect = await bcrypt.compare(password, user.password);
         if (!isPasswordCorrect) {
-            return res.status(400).json({ message: "Invalid credentials" });
+            return res.status(400).json({ error: "Invalid credentials" });
         }
 
         generateTokenAndSetCookie(user._id, res);
@@ -96,7 +96,7 @@ const loginUser = async (req, res) => {
 
     } catch (error) {
         console.error("Error in loginUser:", error);
-        res.status(500).json({ message: "Internal Server Error" });
+        res.status(500).json({ error: "Internal Server Error" });
     }
 };
 
@@ -106,7 +106,7 @@ const logoutUser = (req, res) => {
         res.status(200).json({ message: "User logged out successfully" });
     } catch (err) {
         console.error("Error in logoutUser:", err);
-        res.status(500).json({ message: err.message });
+        res.status(500).json({ error: err.message });
     }
 };
 
@@ -138,7 +138,7 @@ const followUnfollowUser = async (req, res) => {
         }
     } catch (err) {
         console.error("Error in followUnfollowUser:", err);
-        res.status(500).json({ message: "Internal Server Error" });
+        res.status(500).json({ error: "Internal Server Error" });
     }
 };
 
@@ -148,15 +148,15 @@ const updateUser = async (req, res) => {
 
     try {
         let user = await User.findById(userId);
-        if (!user) return res.status(404).json({ message: "User not found" });
+        if (!user) return res.status(404).json({ error: "User not found" });
 
         if (req.params.id && req.params.id !== userId.toString()) {
-            return res.status(403).json({ message: "You cannot update another user's profile" });
+            return res.status(403).json({ error: "You cannot update another user's profile" });
         }
 
         if (password) {
             if (password.length < 6) {
-                return res.status(400).json({ message: "Password must be at least 6 characters long" });
+                return res.status(400).json({ error: "Password must be at least 6 characters long" });
             }
             const salt = await bcrypt.genSalt(10);
             user.password = await bcrypt.hash(password, salt);
@@ -173,7 +173,7 @@ const updateUser = async (req, res) => {
         res.status(200).json({ message: "Profile updated successfully", user });
     } catch (err) {
         console.error("Error in updateUser:", err.message);
-        res.status(500).json({ message: "Server error" });
+        res.status(500).json({ error: "Server error" });
     }
 };
 
