@@ -27,6 +27,10 @@ export default function UpdateProfilePage() {
     bio: user.bio,
     password: '',
   });
+  const fileRef = useRef(null);
+  const [updating, setUpdating] = useState(false);
+  const showToast = useShowToast();
+  const { handleImageChange, imgUrl } = usePreviewImg();
 
   useEffect(() => {
     setInputs({
@@ -38,36 +42,38 @@ export default function UpdateProfilePage() {
     });
   }, [user]);
 
-  const fileRef = useRef(null);
-  const showToast = useShowToast(); // ✅ FIXED: Now correctly invoking the hook
-  const { handleImageChange, imgUrl } = usePreviewImg();
-
   const handleChange = (e) => {
     setInputs({ ...inputs, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (updating) return;
+    setUpdating(true);
 
     try {
       const res = await fetch(`/api/users/update/${user._id}`, {
         method: 'PUT',
         headers: {
-          'Content-Type': 'application/json', // ✅ FIXED: Corrected typo
+          'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ ...inputs, profilePic: imgUrl }), // ✅ FIXED: Removed incorrect semicolon
+        body: JSON.stringify({ ...inputs, profilePic: imgUrl }),
       });
 
       const data = await res.json();
-      if(data.error){
-        showToast("Error",data.error,"error");
+      if (data.error) {
+        showToast('Error', data.error, 'error');
+        setUpdating(false);
         return;
       }
-      showToast("Sucess","Profile Updated Successfully","success");
+
+      showToast('Success', 'Profile Updated Successfully', 'success');
       setUser(data);
-      localStorage.setItem("user-threads", JSON.stringify(data));
+      localStorage.setItem('user-threads', JSON.stringify(data));
     } catch (error) {
       showToast('Error', error.message, 'error');
+    } finally {
+      setUpdating(false);
     }
   };
 
@@ -78,7 +84,7 @@ export default function UpdateProfilePage() {
           spacing={4}
           w={'full'}
           maxW={'md'}
-          bg={useColorModeValue('white', 'gray.dark')}
+          bg={useColorModeValue('white', 'gray.700')}
           rounded={'xl'}
           boxShadow={'lg'}
           p={6}
@@ -103,69 +109,34 @@ export default function UpdateProfilePage() {
 
           <FormControl>
             <FormLabel>Full Name</FormLabel>
-            <Input
-              placeholder="Full Name"
-              value={inputs.name}
-              onChange={handleChange}
-              _placeholder={{ color: 'gray.500' }}
-              type="text"
-              name="name"
-            />
+            <Input placeholder="Full Name" value={inputs.name} onChange={handleChange} name="name" />
           </FormControl>
 
           <FormControl>
             <FormLabel>Username</FormLabel>
-            <Input
-              placeholder="Username"
-              value={inputs.username}
-              onChange={handleChange}
-              _placeholder={{ color: 'gray.500' }}
-              type="text"
-              name="username"
-            />
+            <Input placeholder="Username" value={inputs.username} onChange={handleChange} name="username" />
           </FormControl>
 
           <FormControl>
             <FormLabel>Email</FormLabel>
-            <Input
-              placeholder="your-email@example.com"
-              value={inputs.email}
-              onChange={handleChange}
-              _placeholder={{ color: 'gray.500' }}
-              type="email"
-              name="email"
-            />
+            <Input placeholder="your-email@example.com" value={inputs.email} onChange={handleChange} name="email" />
           </FormControl>
 
           <FormControl>
             <FormLabel>Bio</FormLabel>
-            <Input
-              placeholder="Your Bio"
-              value={inputs.bio}
-              onChange={handleChange}
-              _placeholder={{ color: 'gray.500' }}
-              type="text"
-              name="bio"
-            />
+            <Input placeholder="Your Bio" value={inputs.bio} onChange={handleChange} name="bio" />
           </FormControl>
 
           <FormControl>
             <FormLabel>Password</FormLabel>
-            <Input
-              placeholder="password"
-              value={inputs.password}
-              onChange={handleChange}
-              _placeholder={{ color: 'gray.500' }}
-              type="password"
-              name="password"
-            />
+            <Input placeholder="password" value={inputs.password} onChange={handleChange} type="password" name="password" />
           </FormControl>
 
           <Stack spacing={6} direction={['column', 'row']}>
             <Button bg={'red.400'} color={'white'} w="full" _hover={{ bg: 'red.500' }}>
               Cancel
             </Button>
-            <Button type="submit" bg={'green.400'} color={'white'} w="full" _hover={{ bg: 'green.500' }}>
+            <Button bg={'green.400'} color={'white'} w="full" _hover={{ bg: 'green.500' }} type="submit" isLoading={updating}>
               Submit
             </Button>
           </Stack>
