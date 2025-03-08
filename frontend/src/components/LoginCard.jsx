@@ -28,9 +28,11 @@ import userAtom from '../atoms/userAtom';
       username: "",
       password: "",
     });
+    const [loading, setLoading] = useState(false);
     
     const showToast = useShowToast();
     const handleLogin = async () => {
+      setLoading(true);
       try {
         const res = await fetch("/api/users/login",{
           method: "POST",
@@ -45,14 +47,13 @@ import userAtom from '../atoms/userAtom';
           showToast("Error", data.error,"error");
           return;
         }
-
         console.log(data);
         localStorage.setItem("user-threads", JSON.stringify(data));
         setUser(data);
-        
-
       } catch (error) {
-        
+        showToast("Error", error.message,"error");
+      } finally {
+        setLoading(false);
       }
     };
   
@@ -102,7 +103,7 @@ import userAtom from '../atoms/userAtom';
               </FormControl>
               <Stack spacing={10} pt={2}>
                 <Button
-                  loadingText="Submitting"
+                  loadingText="Logging In"
                   size="lg"
                   bg={useColorModeValue("gray.600","gray.700")}
                   color={'white'}
@@ -110,6 +111,7 @@ import userAtom from '../atoms/userAtom';
                     bg: useColorModeValue("gray.700","gray.800"),
                   }}
                   onClick={handleLogin}
+                  isLoading={loading}
                   >
                   Login
                 </Button>
